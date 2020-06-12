@@ -5,6 +5,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Arrays;
 
 public class IndexServlet extends HttpServlet {
 
@@ -23,13 +24,25 @@ public class IndexServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        // super.doGet(req, resp);
-        PrintWriter w = resp.getWriter();
+        processRequest(req,  resp);
+
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        processRequest(req, resp);
+    }
+
+    private void processRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        PrintWriter w = null;
         try {
+            w = resp.getWriter();
             PrintWriter writer = w;
-            writer.println("Hello Servlet!");
             req.getParameterMap().forEach((key, value)->{
-                writer.println("Hello Servlet!");
+                Arrays.stream(value).forEach(
+                        s->writer.printf("%s = %s\n", key, s)
+                );
+                //writer.printf("Hello Servlet!");
             });
             System.out.println("doGet");
         } finally {
