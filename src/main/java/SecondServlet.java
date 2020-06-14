@@ -19,44 +19,32 @@ public class SecondServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         Model model = new Model();
+        //region Прокручиваем данные которые приняли
         for (Part part : req.getParts()) {
-
-
+            //что делать если данные - имя пользователя (картинки)
             if (part.getName().equals("user_name")) {
                 InputStream inputStream = part.getInputStream();
                 InputStreamReader isr = new InputStreamReader(inputStream);
-
+                //зависываем в переменную
                 model.userName = new BufferedReader(isr)
                         .lines()
                         .collect(Collectors.joining("\n"));
-
-                log("Место 1");
-                log(model.userName);
-
+                //что делать если данные - картинка
             } else if (part.getName().equals("image")) {
-
-
+                //добавляем случайные символы + имя файла
                 model.image = UUID.randomUUID().toString() + part.getSubmittedFileName();
+                //записываем в переменную
                 part.write(model.image);
             }
-
-//            InputStream inputStream = part.getInputStream();
-//            InputStreamReader isr = new InputStreamReader(inputStream);
-//            String userName = new BufferedReader(isr)
-//                    .lines()
-//                    .collect(Collectors.joining("\n"));
-//            model.userName = userName;
-            log("Место 2");
-            log(model.userName);
-            log("Место 3");
-
-
-
         }
+        //endregion
+
+        //добавляем объект с данными в список файлов
         Storage.modelList.add(new Model(model.userName, model.image));
-        log("Место 4");
+
         log(Storage.modelList.get(0).userName);
-        log(Storage.modelList.get(0).image);
+
+
 
         resp.sendRedirect("/single-servlet");
     }
@@ -66,19 +54,24 @@ public class SecondServlet extends HttpServlet {
       //http://127.0.0.1:8888/single-servlet/second-servlet?action=getFileNames
         //получить список имен файлов ранее созраненных на сервере
         if (req.getParameter("action").equals("getFileNames")) {
+            //выводим на экран ссылки на изображения
             Storage.modelList.forEach(model -> {
                 try {
-//                    resp.getWriter().println(model.image);
                     if(model.image !=null ) {
-                        log("getFileNames:");
-                        log("model name" + model.userName);
-                        log("model img" + model.image);
-                        resp.getWriter().println("<a href='http://127.0.0.1:8888/single-servlet/second-servlet?action=showPicture&username="+model.userName+"'>"+model.userName+"</a>\n");
+                        resp.getWriter().println("<p><a href='http://127.0.0.1:8888/single-servlet/second-servlet?action=showPicture&username="+model.userName+"'>"+model.userName+"</a></p>\n");
+                        resp.getWriter().println();
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             });
+            //ссылка на индекс
+            try {
+                resp.getWriter().println("<p><a href=http://127.0.0.1:8888/single-servlet/> Back to index</a></p>\n");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
             // http://127.0.0.1:8888/single-servlet/second-servlet?action=getFile&filename=file_name
             //получить файл по иего имени, переданному от клиента
         } else if (req.getParameter("action").equals("getFile")) {
@@ -92,43 +85,31 @@ public class SecondServlet extends HttpServlet {
             {
                 bout.write(ch);
             }
-
             bin.close();
             fin.close();
             bout.close();
             out.close();
+
+            //вывод на экран хтмл страницы с изобрежнием
         } else if (req.getParameter("action").equals("showPicture")) {
-            log("Im in showPicture");
             Optional<Model> modelOptional = Storage.modelList.stream().filter((model ->
                     model.userName.equals(req.getParameter("username")))).findFirst();
             if(modelOptional.isPresent()){
                 Model model = modelOptional.get();
-                    log("im inside isPresent");
                     resp.setContentType("text/html");
                     PrintWriter out = resp.getWriter();
 
                     out.print("<HTML>");
                     out.print("<HEAD><TITLE>Upload Image</TITLE></HEAD>");
                     out.print("<BODY>");
-
                     out.print("<h1>"+ model.userName + "</h1>");
-                    out.print("<img src = \"http://127.0.0.1:8888/single-servlet/second-servlet?action=getFile&filename=" + model.image + "\"/>");
-
+                    out.print("<img src = \"http://127.0.0.1:8888/single-servlet/second-servlet?action=getFile&filename=" + model.image + "\" width = \"16.8%\" />");
+                    out.print("<p><a href=http://127.0.0.1:8888/single-servlet/second-servlet?action=getFileNames>Back to file list</a></p>");
+                    out.print("<p><a href=http://127.0.0.1:8888/single-servlet/>Back to index</a></p>");
                     out.print("</BODY>");
                     out.print("</HTML>");
                     out.close();
-
             }
-            // http://127.0.0.1:8888/single-servlet/second-servlet?action=showPicture&username=user_name
-            //user_name - динамичекки подставленное имя файла
-            //по имени пользователя из списка моделей одну модель
-            //writer.println
-            //веб-страница для клиента
-            //h2-пользователь
-            //img-пикча
-//            RequestDispatcher rd = req.getRequestDispatcher("static/picturePage.html");
-//            rd.forward(req, resp);
-
         }
     }
 }
